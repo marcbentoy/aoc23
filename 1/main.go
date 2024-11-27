@@ -6,11 +6,19 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
 	puzzleFile = "puzzle.txt"
 	numbers    = "0123456789"
+)
+
+var (
+	wordNums = []string{
+		"one", "two", "three", "four", "five",
+		"six", "seven", "eight", "nine",
+	}
 )
 
 func main() {
@@ -29,13 +37,11 @@ func main() {
 	r := bufio.NewReader(file)
 
 	// read lines
-	i := 0
 	for {
 		line, _, err := r.ReadLine()
 		if len(line) > 0 {
 			first := findnum(string(line), false)
 			second := findnum(string(line), true)
-
 			num := first + second
 			number, err := strconv.Atoi(string(num))
 			if err != nil {
@@ -48,8 +54,9 @@ func main() {
 		if err != nil {
 			break
 		}
-		i++
 	}
+
+	fmt.Printf("len(nums): %v\n", len(nums))
 
 	// get sum
 	fmt.Printf("sum: %d", sum(nums))
@@ -63,13 +70,87 @@ func findnum(line string, toLeft bool) string {
 		line = Reverse(line)
 	}
 
+	var curr string
 	for _, s := range line {
 		if isNum(s) {
 			return string(s)
 		}
+
+		curr += string(s)
+
+		if toLeft {
+			curr = Reverse(curr)
+		}
+
+		wordNum, yes := isWordNum(curr)
+		if yes {
+			return convertWordNumToDigit(wordNum)
+		}
+
+		if toLeft {
+			curr = Reverse(curr)
+		}
 	}
 
 	return string(0)
+}
+
+func FindNums(line string) (foundNums []string) {
+	// find
+	var curr string
+	for _, c := range line {
+		curr += string(c)
+		// if c is digit
+		if isNum(c) {
+			foundNums = append(foundNums, string(c))
+			curr = ""
+			continue
+		}
+
+		wordNum, yes := isWordNum(curr)
+		if yes {
+			foundNums = append(foundNums, convertWordNumToDigit(wordNum))
+			curr = ""
+			continue
+		}
+	}
+	return
+}
+
+func isWordNum(num string) (string, bool) {
+	for _, wordNum := range wordNums {
+		if strings.Contains(num, wordNum) {
+			return wordNum, true
+		}
+	}
+	return "", false
+}
+
+func convertWordNumToDigit(wordNum string) string {
+	switch wordNum {
+	case "zero":
+		return "0"
+	case "one":
+		return "1"
+	case "two":
+		return "2"
+	case "three":
+		return "3"
+	case "four":
+		return "4"
+	case "five":
+		return "5"
+	case "six":
+		return "6"
+	case "seven":
+		return "7"
+	case "eight":
+		return "8"
+	case "nine":
+		return "9"
+	default:
+		return ""
+	}
 }
 
 func isNum(c rune) bool {
