@@ -37,8 +37,10 @@ func main() {
 
 	r := bufio.NewReader(file)
 
-	var partNumbers, digits []*Digit
-	var symbols []*Symbol
+	// partNumbers are now the product of two numbers in a gear
+	var digits []*Digit
+	var gears, symbols []*Symbol
+	var partNumbers []int
 	i := 0
 	for {
 		line, _, err := r.ReadLine()
@@ -52,19 +54,16 @@ func main() {
 		i++
 	}
 
-	partNumbers = append(partNumbers, eval(symbols, digits)...)
+	gears = findGears(symbols, digits)
+
+	partNumbers = eval(gears, digits)
 
 	fmt.Println("sum: ", sum(partNumbers))
 }
 
-func sum(digits []*Digit) (total int) {
+func sum(digits []int) (total int) {
 	for _, d := range digits {
-		value, err := strconv.Atoi(d.value)
-		if err != nil {
-			log.Println("error converting value to int:", err)
-			return 0
-		}
-		total += value
+		total += d
 	}
 	return
 }
@@ -87,7 +86,7 @@ func getTokens(line string, lineNum int) (symbols []*Symbol, digits []*Digit) {
 		}
 
 		// assumes that c is a symbol
-		if !isDigit(rune(line[i])) {
+		if line[i] == '*' {
 			if number != "" {
 				digits = append(digits, &Digit{
 					value: number,
@@ -127,17 +126,46 @@ func isDigit(c rune) bool {
 	return false
 }
 
-func eval(symbols []*Symbol, digits []*Digit) (partNumbers []*Digit) {
+func eval(symbols []*Symbol, digits []*Digit) (partNumbers []int) {
 	for _, s := range symbols {
+		var product int
 		// get adjacent digits
 		for _, d := range digits {
 			if isAdjacent(s, d) {
-				partNumbers = append(partNumbers, d)
+				if product == 0 {
+					product = 1
+				}
+
+				value, err := strconv.Atoi(d.value)
+				if err != nil {
+					log.Println("error converting value to int:", err)
+					return []int{}
+				}
+
+				product *= value
 			}
 		}
+		partNumbers = append(partNumbers, product)
 	}
 
 	return partNumbers
+}
+
+func findGears(symbols []*Symbol, digits []*Digit) (gears []*Symbol) {
+	for _, s := range symbols {
+		dQty := 0
+		// get adjacent digits
+		for _, d := range digits {
+			if isAdjacent(s, d) {
+				dQty++
+			}
+		}
+
+		if dQty == 2 {
+			gears = append(gears, s)
+		}
+	}
+	return
 }
 
 func isAdjacent(s *Symbol, d *Digit) bool {
@@ -147,5 +175,9 @@ func isAdjacent(s *Symbol, d *Digit) bool {
 		(s.index >= a && s.index <= b) {
 		return true
 	}
+	return false
+}
+
+func isGear() bool {
 	return false
 }
